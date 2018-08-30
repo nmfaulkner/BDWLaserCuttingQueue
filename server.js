@@ -8,7 +8,7 @@ var env = require('dotenv/config');
 const nodemailer = require('nodemailer');
 const xoauth2 = require('xoauth2');
 
-var io = require('socket.io').listen(server);
+var io = require('socket.io').listen(server); // WARNING Duplicate?
 server.listen(8080, function () {
   console.log("Listening on port 8080")
 });
@@ -44,6 +44,7 @@ app.get('/monitor', auth.connect(basic), (req, res) => {
 });
 
 function sendEmail(userEmail, laser_number){
+  //console.log("Mail sending?...")
 
   nodemailer.createTestAccount((err, account) => {
       // create reusable transporter object using the default SMTP transport
@@ -51,7 +52,7 @@ function sendEmail(userEmail, laser_number){
         service: 'gmail',
         auth: {
           user: 'bdwautomation@gmail.com',
-          pass: process.env.EMAIL_PASSWORD
+          pass: 'chrisbull' //process.env.EMAIL_PASSWORD
         }
       });
 
@@ -71,7 +72,7 @@ function sendEmail(userEmail, laser_number){
           }
 
           else{
-            console.log("Message Sent");
+            console.log("Message Sent to: " + userEmail);
           }
 
       });
@@ -91,12 +92,12 @@ io.sockets.on('connection', function(socket) {
 
   socket.on("signin", function() {
     calculateTime();
-    socket.emit('handshake', q, lastTime);
+    socket.emit('handshake', q);
   });
 
   socket.on('join', function(username, length, pnum, email, should_email) { // Fired by client when it joins the queue
 
-    if (ids.has(email)) return;
+    if (ids.has(email) || !email) return;
     ids.set(email, username);
 
     var cred = {
@@ -111,10 +112,10 @@ io.sockets.on('connection', function(socket) {
 
     q.push(cred);
 
-    pulltoCutter();
-    if(q.length === 3) { // WARNING queue implementation
+    if(q[0] == null && q[1] == null && q.length === 3) { // WARNING queue implementation
       ticking = setInterval(function () {tickCurrentUsers();}, (60000));
     }
+    pulltoCutter();
 
     calculateTime();
 
@@ -262,7 +263,7 @@ function pulltoCutter() {
   }
 
 
-  io.sockets.emit('handshake', q, lastTime); // Send the updated queue.
+  io.sockets.emit('handshake', q); // Send the updated queue.
 
   return [user_em, lc_num];
 }
@@ -294,28 +295,29 @@ function calculateTime() {
     }
   }
 
-  if(lasercutter_2>lasercutter_1){
-    lastTime=lasercutter_1;
-  }else{
-    lastTime = lasercutter_2;
-  }
+  // if(lasercutter_2>lasercutter_1){
+  //   lastTime=lasercutter_1;
+  // }else{
+  //   lastTime = lasercutter_2;
+  // }
 
-  io.sockets.emit("handshake",q, lastTime);
+  io.sockets.emit("handshake",q);
 }
 
 function tickCurrentUsers() {
   // Check first two entries - reserved for cutters
 
   for (var i = 0; i < 2; i++) {
-    if(i === 0 || i === 1){
-      q[i].cut_length -= 1;
-    }
+    // if(i === 0 || i === 1){
+    //   q[i].cut_length -= 1;
+    // }
     if (q[i] == null) {
       pulltoCutter();
       calculateTime();
     } else{
       if(q[i].time_remaining >= 2){
         q[i].time_remaining -= 1;
+        q[i].cut_length -= 1;
         calculateTime();
       } else {
         finishCutting(i);

@@ -100,7 +100,7 @@ $(document).ready(() => {
     //on reconnection after disconnection server need to send updated queue
 
   function sendNewQueueUser(username,length, phone_number, email) {
-    socket.emit("join", username, length, phone_number, email);
+    socket.emit("join", username, length, phone_number, email, should_email);
   };
 
 
@@ -240,6 +240,10 @@ $(document).ready(() => {
     var auth2 = gapi.auth2.getAuthInstance();
     auth2.signOut().then(function () {
     });
+    username = "";
+    userEmail = null;
+    should_email = false;
+    socket.emit("signin");
 
     var signInButton = document.getElementById("sign-in");
     signInButton.classList.remove("hidden");
@@ -263,6 +267,7 @@ $(document).ready(() => {
   /* Webpage Interaction Util Functions */
 
   function renderQ(queue) {
+    console.log(queue)
     var ls_1 = 0;
     var ls_2 = 0;
     var in_queue = false;
@@ -292,6 +297,7 @@ $(document).ready(() => {
               if(i === 0||i === 1) {
                 //add youre up
                 $(".youre-up-title").removeClass("hidden");
+                $(".youre-up-container").css("display", "block");
                 $(".time-background-block").css("background-color","red");
                 if(should_email === true){
                   socket.emit("up-next", userEmail);
@@ -309,11 +315,13 @@ $(document).ready(() => {
               }
 
             }
-        }
+          }
         }
 
       if (in_queue == false) {
         changeTimer(Math.min(ls_1, ls_2));
+        $(".join-queue-form").removeClass("hidden");
+        should_email = false;
       }
 
       // if (timeRemaining == -1) {
