@@ -3,7 +3,6 @@ var userId = -1;
 var username;
 var userEmail;
 var socket = io.connect();
-var should_email = false;
 
 function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
@@ -29,20 +28,20 @@ $(document).ready(() => {
 
     // Server emits this on connection to give initial state of the queue
     socket.on('handshake', function(queue) {
-      // var timeRemaining = 0;
-      //
-      // for(var i = 0; i < queue.length; i++) {
-      //   if(queue[i] != null){
-      //     if(queue[i].userEmail != userEmail) {
-      //       timeRemaining = parseInt(queue[i].time_remaining);
-      //     } else {
-      //       break;
-      //     }
-      // }
-      //
-      // }
-      //
-      // updateTimer(timeRemaining);
+      var timeRemaining = 0;
+
+      for(var i = 0; i < queue.length; i++) {
+        if(queue[i] != null){
+          if(queue[i].userEmail != userEmail) {
+            timeRemaining = parseInt(queue[i].time_remaining);
+          } else {
+            break;
+          }
+      }
+
+      }
+
+      updateTimer(timeRemaining);
       renderQ(queue);
     });
 
@@ -137,7 +136,7 @@ $(document).ready(() => {
 
   $('body').on('click', "#delete-queue-button",function () {
     $(".join-queue-form").removeClass("hidden");
-    $(".youre-up-title").addClass("hidden");
+    $(".youre-up-container").css("display", "none");
     $(".time-background-block").css("background-color","#1c75bc");
     socket.emit('delete-user', userEmail);
   });
@@ -230,7 +229,7 @@ $(document).ready(() => {
 
   $("#sign-out").click(function() {
     $(".join-queue-form").removeClass("hidden");
-    //socket.emit('delete-user', userEmail);
+    socket.emit('delete-user', userEmail);
     signOut();
 
   });
@@ -258,9 +257,9 @@ $(document).ready(() => {
 
   /* Phone Checkbox Form Interaction */
   //phone number checkbox clicked
-  $("#email-notification-checkbox input").click(function () {
-    should_email = true;
-  });
+  // $("#email-notification-checkbox input").click(function () {
+  //   should_email = true;
+  // });
 
   /* --------------------------------------------------- */
 
@@ -280,18 +279,7 @@ $(document).ready(() => {
 
         for(var i = 0; i < queue.length; i++) {
           if(queue[i] != null){
-
-            if (i === 0) {
-              ls_1 += queue[i].time_remaining;
-            } else if (i === 0) {
-              ls_2 += queue[i].time_remaining;
-            } else {
-              ls_1 > ls_2 ? ls_2 += queue[i].cut_length : ls_1 += queue[i].cut_length;
-            }
-
-
             if(queue[i].email === userEmail) {
-              in_queue = true;
               changeTimer(queue[i].time_remaining);
               $(".join-queue-form").addClass("hidden");
               if(i === 0||i === 1) {
@@ -299,9 +287,6 @@ $(document).ready(() => {
                 $(".youre-up-title").removeClass("hidden");
                 $(".youre-up-container").css("display", "block");
                 $(".time-background-block").css("background-color","red");
-                if(should_email === true){
-                  socket.emit("up-next", userEmail);
-                }
                 addToQueue(i+1, queue[i].username,queue[i].time_remaining,"user");
               } else {
                   addToQueue(i+1, queue[i].username,queue[i].cut_length,"user");
@@ -311,7 +296,7 @@ $(document).ready(() => {
               if(i === 0 || i === 1) {
                 addToQueue(i+1, queue[i].username,queue[i].cut_length,"non-user");
               } else {
-                addToQueue(i+1, queue[i].username,queue[i].cut_length,"user ");
+                addToQueue(i+1, queue[i].username,queue[i].cut_length,"non-user");
               }
 
             }

@@ -26,8 +26,6 @@ var ids = new Map();
 
 var hr = (new Date()).getHours();
 
-var lastTime=0;
-
 // Setting time interval for
 var ticking;
 
@@ -81,14 +79,13 @@ function sendEmail(userEmail, laser_number){
 };
 
 io.sockets.on('connection', function(socket) {
-  calculateTime();
 
   if(!isItOpen()){
     socket.emit('closed');
   }
   else{
 
-  socket.emit('handshake', q, lastTime); // Sends the newly connected client current state of the queue
+  socket.emit('handshake', q); // Sends the newly connected client current state of the queue
 
   socket.on("signin", function() {
     calculateTime();
@@ -223,9 +220,7 @@ function finishCutting(c_num) {
   Function that 'pulls' the next person on the queue to start cutting.
   It checks if the cutter are empty and there exists a person on the queue to pull,
   so the server should call this function WHENEVER the lasercutter is potentially not occupied.
-
   Parameter: None
-
   Return type: Javascript Array, [<userid>, <Lasercutter Number>]
 */
 function pulltoCutter() {
@@ -277,12 +272,6 @@ function calculateTime() {
   }
   if (q[1] != null) {
     lasercutter_2 += q[1].time_remaining;
-  }
-
-  if(lasercutter_2>lasercutter_1){
-    lastTime=lasercutter_1;
-  }else{
-    lastTime = lasercutter_2;
   }
 
   for (var i = 2; i < q.length; i++) {
